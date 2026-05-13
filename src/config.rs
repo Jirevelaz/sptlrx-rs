@@ -28,9 +28,10 @@ impl Config {
             config_path.push("config.toml");
 
             if let Ok(content) = fs::read_to_string(&config_path)
-                && let Ok(config) = toml::from_str::<Config>(&content) {
-                    return config;
-                }
+                && let Ok(config) = toml::from_str::<Config>(&content)
+            {
+                return config;
+            }
         }
 
         // Default config si no hay archivo o hay error al parsear
@@ -50,31 +51,32 @@ impl Config {
 
         // Sobreescribir con custom si existe y se eligió 'custom'
         if self.theme.as_deref() == Some("custom")
-            && let Some(custom) = &self.custom {
-                if let Some(accent) = &custom.accent {
-                    theme.accent = hex_to_color(accent);
-                }
-
-                if let Some(text) = &custom.text {
-                    theme.bright = hex_to_color(text);
-                }
-
-                if let Some(dim1) = &custom.dim1 {
-                    theme.dim1 = hex_to_color(dim1);
-                }
-
-                if let Some(dim2) = &custom.dim2 {
-                    theme.dim2 = hex_to_color(dim2);
-                }
-
-                if let Some(dim3) = &custom.dim3 {
-                    theme.dim3 = hex_to_color(dim3);
-                }
-
-                if let Some(bar) = &custom.bar {
-                    theme.bar = hex_to_color(bar);
-                }
+            && let Some(custom) = &self.custom
+        {
+            if let Some(accent) = &custom.accent {
+                theme.accent = hex_to_color(accent);
             }
+
+            if let Some(text) = &custom.text {
+                theme.bright = hex_to_color(text);
+            }
+
+            if let Some(dim1) = &custom.dim1 {
+                theme.dim1 = hex_to_color(dim1);
+            }
+
+            if let Some(dim2) = &custom.dim2 {
+                theme.dim2 = hex_to_color(dim2);
+            }
+
+            if let Some(dim3) = &custom.dim3 {
+                theme.dim3 = hex_to_color(dim3);
+            }
+
+            if let Some(bar) = &custom.bar {
+                theme.bar = hex_to_color(bar);
+            }
+        }
 
         // Aplicar fondo sólido si el usuario lo pide explícitamente, sino se queda transparente (Reset)
         if let Some(bg_hex) = &self.background {

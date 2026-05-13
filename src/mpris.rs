@@ -47,9 +47,10 @@ pub async fn toggle_play_pause(player: &str) {
     let p = player.to_string();
     tokio::spawn(async move {
         if let Ok(conn) = Connection::session().await
-            && let Ok(player) = build_player(&conn, &p).await {
-                let _ = player.play_pause_track().await;
-            }
+            && let Ok(player) = build_player(&conn, &p).await
+        {
+            let _ = player.play_pause_track().await;
+        }
     });
 }
 
@@ -57,9 +58,10 @@ pub async fn next_track(player: &str) {
     let p = player.to_string();
     tokio::spawn(async move {
         if let Ok(conn) = Connection::session().await
-            && let Ok(player) = build_player(&conn, &p).await {
-                let _ = player.next_track().await;
-            }
+            && let Ok(player) = build_player(&conn, &p).await
+        {
+            let _ = player.next_track().await;
+        }
     });
 }
 
@@ -67,9 +69,10 @@ pub async fn previous_track(player: &str) {
     let p = player.to_string();
     tokio::spawn(async move {
         if let Ok(conn) = Connection::session().await
-            && let Ok(player) = build_player(&conn, &p).await {
-                let _ = player.previous_track().await;
-            }
+            && let Ok(player) = build_player(&conn, &p).await
+        {
+            let _ = player.previous_track().await;
+        }
     });
 }
 
@@ -77,9 +80,10 @@ pub async fn seek_relative(offset_us: i64, player: &str) {
     let p = player.to_string();
     tokio::spawn(async move {
         if let Ok(conn) = Connection::session().await
-            && let Ok(player) = build_player(&conn, &p).await {
-                let _ = player.seek_track(offset_us).await;
-            }
+            && let Ok(player) = build_player(&conn, &p).await
+        {
+            let _ = player.seek_track(offset_us).await;
+        }
     });
 }
 

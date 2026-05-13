@@ -645,33 +645,34 @@ pub async fn run(mut rx: Receiver<AppEvent>, theme: Theme, player: String) -> an
 
         // ── Eventos de teclado (non-blocking) ─────────────────────────────
         if event::poll(Duration::from_millis(0))?
-            && let Event::Key(key) = event::read()? {
-                // Solo reaccionar a presionar la tecla (evita dobles acciones)
-                if key.kind == event::KeyEventKind::Press {
-                    match key.code {
-                        KeyCode::Char('q') | KeyCode::Esc => break,
-                        KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            break;
-                        }
-                        KeyCode::Char(' ') => {
-                            crate::mpris::toggle_play_pause(&player).await;
-                        }
-                        KeyCode::Char('n') | KeyCode::Char('N') => {
-                            crate::mpris::next_track(&player).await;
-                        }
-                        KeyCode::Char('p') | KeyCode::Char('P') => {
-                            crate::mpris::previous_track(&player).await;
-                        }
-                        KeyCode::Right => {
-                            crate::mpris::seek_relative(5_000_000, &player).await;
-                        }
-                        KeyCode::Left => {
-                            crate::mpris::seek_relative(-5_000_000, &player).await;
-                        }
-                        _ => {}
+            && let Event::Key(key) = event::read()?
+        {
+            // Solo reaccionar a presionar la tecla (evita dobles acciones)
+            if key.kind == event::KeyEventKind::Press {
+                match key.code {
+                    KeyCode::Char('q') | KeyCode::Esc => break,
+                    KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                        break;
                     }
+                    KeyCode::Char(' ') => {
+                        crate::mpris::toggle_play_pause(&player).await;
+                    }
+                    KeyCode::Char('n') | KeyCode::Char('N') => {
+                        crate::mpris::next_track(&player).await;
+                    }
+                    KeyCode::Char('p') | KeyCode::Char('P') => {
+                        crate::mpris::previous_track(&player).await;
+                    }
+                    KeyCode::Right => {
+                        crate::mpris::seek_relative(5_000_000, &player).await;
+                    }
+                    KeyCode::Left => {
+                        crate::mpris::seek_relative(-5_000_000, &player).await;
+                    }
+                    _ => {}
                 }
             }
+        }
 
         // Detección de tramo instrumental
         let mut target_offset = state.current_line.unwrap_or(0) as f64;
@@ -681,21 +682,20 @@ pub async fn run(mut rx: Receiver<AppEvent>, theme: Theme, player: String) -> an
         if let Some(curr) = state.current_line
             && let (Some(curr_lyric), Some(next_lyric)) =
                 (state.lyrics.get(curr), state.lyrics.get(curr + 1))
+        {
+            // Si la distancia total entre actual y siguiente es > 15s
+            if next_lyric
+                .timestamp_ms
+                .saturating_sub(curr_lyric.timestamp_ms)
+                > 15000
             {
-                // Si la distancia total entre actual y siguiente es > 15s
-                if next_lyric
-                    .timestamp_ms
-                    .saturating_sub(curr_lyric.timestamp_ms)
-                    > 15000
-                {
-                    // Si pasaron 5s de la actual, y faltan más de 2s para la siguiente
-                    if pos > curr_lyric.timestamp_ms + 5000 && pos + 2000 < next_lyric.timestamp_ms
-                    {
-                        state.is_instrumental = true;
-                        target_offset += 0.5; // Apuntar visualmente al medio
-                    }
+                // Si pasaron 5s de la actual, y faltan más de 2s para la siguiente
+                if pos > curr_lyric.timestamp_ms + 5000 && pos + 2000 < next_lyric.timestamp_ms {
+                    state.is_instrumental = true;
+                    target_offset += 0.5; // Apuntar visualmente al medio
                 }
             }
+        }
 
         // Interpolación visual a 60fps
         state.visual_offset += (target_offset - state.visual_offset) * 0.15;
