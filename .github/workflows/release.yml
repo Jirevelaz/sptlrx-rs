@@ -1,19 +1,34 @@
 name: Release Pipeline
 
-# Este flujo SOLO se dispara cuando creas un tag de versión (ej. v1.0.0)
+# Solo se dispara al crear un tag de versión (ej: v1.0.0)
 on:
   push:
     tags:
       - 'v*.*.*'
 
-# Permiso necesario para que el bot de GitHub pueda crear la página de Release
 permissions:
   contents: write
 
 jobs:
-  build-and-publish:
-    name: Build Static and Publish
+  # ── Gate: CI debe pasar antes de publicar ───────────────────────────────────
+  ci:
+    name: CI Checks
+    uses: ./.github/workflows/ci.yml
+
+  # ── Build multi-arquitectura con Nix ────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.arch }})
     runs-on: ubuntu-latest
+    needs: ci
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64-linux
+            nix-system: x86_64-linux
+            artifact-suffix: x86_64
+          - arch: aarch64-linux
+            nix-system: aarch64-linux
+            artifact-suffix: aarch64
 
     steps:
       - name: Checkout repository
@@ -21,23 +36,63 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            extra-platforms = aarch64-linux
 
       - name: Setup Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@main
 
+      - name: Setup QEMU for aarch64
+        if: matrix.arch == 'aarch64-linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Build static binary
-        run: nix build .#static
+        run: nix build .#static --system ${{ matrix.nix-system }}
 
-      - name: Optimize binary (Strip & UPX)
+      - name: Prepare artifact
         run: |
-          sudo apt-get update && sudo apt-get install -y binutils upx
-          cp result/bin/sptlrx-rs ./sptlrx-rs-portable
-          chmod +w ./sptlrx-rs-portable
-          strip ./sptlrx-rs-portable
-          upx --best --lzma ./sptlrx-rs-portable
+          cp result/bin/sptlrx-rs ./sptlrx-rs-${{ matrix.artifact-suffix }}
+          chmod +w ./sptlrx-rs-${{ matrix.artifact-suffix }}
+          strip ./sptlrx-rs-${{ matrix.artifact-suffix }} || true
 
-      - name: Create GitHub Release and Upload Asset
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.artifact-suffix }}
+          path: ./sptlrx-rs-${{ matrix.artifact-suffix }}
+
+  # ── Publicar Release con ambos binarios ─────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./sptlrx-rs-portable
+          files: artifacts/*
           generate_release_notes: true
+          body: |
+            ## Binarios disponibles
+
+            | Archivo | Arquitectura | Descripción |
+            |---------|-------------|-------------|
+            | `sptlrx-rs-x86_64` | x86_64 | Intel/AMD (mayoría de PCs) |
+            | `sptlrx-rs-aarch64` | aarch64 | ARM64 (Raspberry Pi, etc.) |
+
+            ### Instalación rápida
+            ```bash
+            chmod +x sptlrx-rs-*
+            sudo mv sptlrx-rs-x86_64 /usr/local/bin/sptlrx-rs
+            ```
