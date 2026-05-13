@@ -10,16 +10,12 @@ permissions:
   contents: write
 
 jobs:
-  # ── Gate: CI debe pasar antes de publicar ───────────────────────────────────
-  ci:
-    name: CI Checks
-    uses: ./.github/workflows/ci.yml
-
   # ── Build multi-arquitectura con Nix ────────────────────────────────────────
+  # Nota: CI (fmt, clippy, test, audit) ya corre en cada push a master.
+  # Para cuando se crea un tag, el commit ya pasó todas las verificaciones.
   build:
     name: Build (${{ matrix.arch }})
     runs-on: ubuntu-latest
-    needs: ci
     strategy:
       matrix:
         include:
