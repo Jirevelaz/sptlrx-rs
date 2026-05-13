@@ -213,7 +213,7 @@ fn render(frame: &mut Frame, state: &AppState) {
     // Matemática responsiva inteligente (Smart Scaling):
     // El ancho intenta ser 1/3 de la pantalla, pero se ajusta si el alto es escaso.
     let max_art_width = (area.width / 3).clamp(10, 30);
-    let max_art_height = (area.height.saturating_sub(8) as u16).max(5); // Reservar espacio para info/botones
+    let max_art_height = area.height.saturating_sub(8).max(5); // Reservar espacio para info/botones
 
     let art_width = max_art_width.min(max_art_height * 2);
     let art_height = art_width / 2;
@@ -228,7 +228,7 @@ fn render(frame: &mut Frame, state: &AppState) {
         let max_w = (area.width / 2)
             .clamp(20, 50)
             .min(area.width.saturating_sub(4));
-        let max_h = (area.height.saturating_sub(8) as u16).max(5);
+        let max_h = area.height.saturating_sub(8).max(5);
 
         let centered_width = max_w.min(max_h * 2);
         let centered_height = centered_width / 2;
@@ -644,8 +644,8 @@ pub async fn run(mut rx: Receiver<AppEvent>, theme: Theme, player: String) -> an
         }
 
         // ── Eventos de teclado (non-blocking) ─────────────────────────────
-        if event::poll(Duration::from_millis(0))? {
-            if let Event::Key(key) = event::read()? {
+        if event::poll(Duration::from_millis(0))?
+            && let Event::Key(key) = event::read()? {
                 // Solo reaccionar a presionar la tecla (evita dobles acciones)
                 if key.kind == event::KeyEventKind::Press {
                     match key.code {
@@ -672,15 +672,14 @@ pub async fn run(mut rx: Receiver<AppEvent>, theme: Theme, player: String) -> an
                     }
                 }
             }
-        }
 
         // Detección de tramo instrumental
         let mut target_offset = state.current_line.unwrap_or(0) as f64;
         let pos = state.interpolated_pos_ms();
         state.is_instrumental = false;
 
-        if let Some(curr) = state.current_line {
-            if let (Some(curr_lyric), Some(next_lyric)) =
+        if let Some(curr) = state.current_line
+            && let (Some(curr_lyric), Some(next_lyric)) =
                 (state.lyrics.get(curr), state.lyrics.get(curr + 1))
             {
                 // Si la distancia total entre actual y siguiente es > 15s
@@ -697,7 +696,6 @@ pub async fn run(mut rx: Receiver<AppEvent>, theme: Theme, player: String) -> an
                     }
                 }
             }
-        }
 
         // Interpolación visual a 60fps
         state.visual_offset += (target_offset - state.visual_offset) * 0.15;

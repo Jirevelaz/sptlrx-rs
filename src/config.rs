@@ -27,11 +27,10 @@ impl Config {
             config_path.push("sptlrx-rs");
             config_path.push("config.toml");
 
-            if let Ok(content) = fs::read_to_string(&config_path) {
-                if let Ok(config) = toml::from_str::<Config>(&content) {
+            if let Ok(content) = fs::read_to_string(&config_path)
+                && let Ok(config) = toml::from_str::<Config>(&content) {
                     return config;
                 }
-            }
         }
 
         // Default config si no hay archivo o hay error al parsear
@@ -50,8 +49,8 @@ impl Config {
         };
 
         // Sobreescribir con custom si existe y se eligió 'custom'
-        if self.theme.as_deref() == Some("custom") {
-            if let Some(custom) = &self.custom {
+        if self.theme.as_deref() == Some("custom")
+            && let Some(custom) = &self.custom {
                 if let Some(accent) = &custom.accent {
                     theme.accent = hex_to_color(accent);
                 }
@@ -76,7 +75,6 @@ impl Config {
                     theme.bar = hex_to_color(bar);
                 }
             }
-        }
 
         // Aplicar fondo sólido si el usuario lo pide explícitamente, sino se queda transparente (Reset)
         if let Some(bg_hex) = &self.background {

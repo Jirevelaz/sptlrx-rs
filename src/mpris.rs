@@ -46,44 +46,40 @@ trait Player {
 pub async fn toggle_play_pause(player: &str) {
     let p = player.to_string();
     tokio::spawn(async move {
-        if let Ok(conn) = Connection::session().await {
-            if let Ok(player) = build_player(&conn, &p).await {
+        if let Ok(conn) = Connection::session().await
+            && let Ok(player) = build_player(&conn, &p).await {
                 let _ = player.play_pause_track().await;
             }
-        }
     });
 }
 
 pub async fn next_track(player: &str) {
     let p = player.to_string();
     tokio::spawn(async move {
-        if let Ok(conn) = Connection::session().await {
-            if let Ok(player) = build_player(&conn, &p).await {
+        if let Ok(conn) = Connection::session().await
+            && let Ok(player) = build_player(&conn, &p).await {
                 let _ = player.next_track().await;
             }
-        }
     });
 }
 
 pub async fn previous_track(player: &str) {
     let p = player.to_string();
     tokio::spawn(async move {
-        if let Ok(conn) = Connection::session().await {
-            if let Ok(player) = build_player(&conn, &p).await {
+        if let Ok(conn) = Connection::session().await
+            && let Ok(player) = build_player(&conn, &p).await {
                 let _ = player.previous_track().await;
             }
-        }
     });
 }
 
 pub async fn seek_relative(offset_us: i64, player: &str) {
     let p = player.to_string();
     tokio::spawn(async move {
-        if let Ok(conn) = Connection::session().await {
-            if let Ok(player) = build_player(&conn, &p).await {
+        if let Ok(conn) = Connection::session().await
+            && let Ok(player) = build_player(&conn, &p).await {
                 let _ = player.seek_track(offset_us).await;
             }
-        }
     });
 }
 
@@ -200,8 +196,8 @@ pub async fn run(tx: Sender<AppEvent>, fetch_tx: Sender<TrackInfo>, destination:
                     match player.metadata().await {
                         Ok(meta) => {
                             error_count = 0;
-                            if let Some(track_id) = get_track_id(&meta) {
-                                if track_id != last_track_id {
+                            if let Some(track_id) = get_track_id(&meta)
+                                && track_id != last_track_id {
                                     last_track_id = track_id;
                                     track_just_changed = true;
 
@@ -227,7 +223,6 @@ pub async fn run(tx: Sender<AppEvent>, fetch_tx: Sender<TrackInfo>, destination:
                                         });
                                     }
                                 }
-                            }
                         }
                         Err(_) => {
                             error_count += 1;
@@ -246,13 +241,11 @@ pub async fn run(tx: Sender<AppEvent>, fetch_tx: Sender<TrackInfo>, destination:
                     }
 
                     // 3. Position (skip si hubo cambio de canción)
-                    if !track_just_changed {
-                        if let Ok(pos_us) = player.position().await {
-                            if tx.send(AppEvent::Position(pos_us)).await.is_err() {
+                    if !track_just_changed
+                        && let Ok(pos_us) = player.position().await
+                            && tx.send(AppEvent::Position(pos_us)).await.is_err() {
                                 return; // El canal se cerró, la app está cerrando
                             }
-                        }
-                    }
                 }
 
                 // ── Rama 2: Señal Seeked (instantánea) ────────────────────────

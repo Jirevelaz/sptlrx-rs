@@ -39,8 +39,7 @@ fn clean_title(title: &str) -> String {
 
     // Eliminar contenido entre paréntesis/corchetes que sea ruido
     for (open, close) in [('(', ')'), ('[', ']')] {
-        loop {
-            let Some(start) = s.find(open) else { break };
+        while let Some(start) = s.find(open) {
             let Some(rel_end) = s[start..].find(close) else {
                 break;
             };
@@ -90,13 +89,11 @@ async fn fetch_from_lrclib(client: &reqwest::Client, track: &TrackInfo) -> Optio
         .await
         .ok()?;
 
-    if resp.status().is_success() {
-        if let Ok(data) = resp.json::<LrcLibResult>().await {
-            if data.synced_lyrics.is_some() {
+    if resp.status().is_success()
+        && let Ok(data) = resp.json::<LrcLibResult>().await
+            && data.synced_lyrics.is_some() {
                 return data.synced_lyrics;
             }
-        }
-    }
 
     // Intento 2: búsqueda sin duración (más flexible)
     let resp = client
@@ -106,11 +103,10 @@ async fn fetch_from_lrclib(client: &reqwest::Client, track: &TrackInfo) -> Optio
         .await
         .ok()?;
 
-    if resp.status().is_success() {
-        if let Ok(results) = resp.json::<Vec<LrcLibResult>>().await {
+    if resp.status().is_success()
+        && let Ok(results) = resp.json::<Vec<LrcLibResult>>().await {
             return results.into_iter().find_map(|r| r.synced_lyrics);
         }
-    }
 
     None
 }
@@ -119,26 +115,23 @@ async fn get_lyrics(client: &reqwest::Client, track: &TrackInfo) -> Option<Strin
     let cache_path = get_cache_path(track);
 
     // 1. Intentar leer de la caché
-    if let Some(path) = &cache_path {
-        if let Ok(content) = tokio::fs::read_to_string(path).await {
-            if !content.trim().is_empty() {
+    if let Some(path) = &cache_path
+        && let Ok(content) = tokio::fs::read_to_string(path).await
+            && !content.trim().is_empty() {
                 return Some(content);
             }
-        }
-    }
 
     // 2. Fetch de LRCLIB
     let lyrics_opt = fetch_from_lrclib(client, track).await;
 
     // 3. Guardar en la caché
-    if let Some(lyrics) = &lyrics_opt {
-        if let Some(path) = &cache_path {
+    if let Some(lyrics) = &lyrics_opt
+        && let Some(path) = &cache_path {
             if let Some(parent) = path.parent() {
                 let _ = tokio::fs::create_dir_all(parent).await;
             }
             let _ = tokio::fs::write(path, lyrics).await;
         }
-    }
 
     lyrics_opt
 }

@@ -78,7 +78,8 @@ impl Theme {
             "tokyo-night" => Self::tokyo_night(),
             "nord" => Self::nord(),
             "rose-pine" => Self::rose_pine(),
-            "catppuccin-mocha" | _ => Self::catppuccin_mocha(),
+            "catppuccin-mocha" => Self::catppuccin_mocha(),
+            _ => Self::catppuccin_mocha(),
         }
     }
 }
