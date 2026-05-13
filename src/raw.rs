@@ -3,8 +3,8 @@ use std::time::Instant;
 use tokio::sync::mpsc::Receiver;
 
 use crate::{
-    lyrics::{find_current_line, LrcLine},
     AppEvent,
+    lyrics::{LrcLine, find_current_line},
 };
 
 struct RawState {
