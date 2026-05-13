@@ -3,7 +3,12 @@ use std::collections::HashMap;
 
 pub async fn get_dominant_color(url: &str) -> Option<(Color, image::RgbImage)> {
     let bytes = if url.starts_with("http") {
-        reqwest::get(url).await.ok()?.bytes().await.ok()?
+        // Cliente efímero con timeout estricto de 5 segundos
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .ok()?;
+        client.get(url).send().await.ok()?.bytes().await.ok()?
     } else if url.starts_with("file://") {
         // Decodificar la URL por si tiene espacios (%20)
         let path = url.trim_start_matches("file://");
@@ -41,7 +46,7 @@ pub async fn get_dominant_color(url: &str) -> Option<(Color, image::RgbImage)> {
         let max_val = r.max(g).max(b);
         let min_val = r.min(g).min(b);
         let saturation = max_val.saturating_sub(min_val);
-        
+
         // Multiplicador de "vistosidad": preferimos colores saturados
         let score = count * (1 + saturation as usize);
 

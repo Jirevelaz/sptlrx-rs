@@ -8,7 +8,7 @@ edition = "2024"
 tokio = { version = "1.35", features = ["full"] }
 
 # Para comunicarnos con Spotify de forma nativa
-zbus = "3.14"
+zbus = "5"
 
 # Para dibujar la interfaz gráfica de terminal a 60fps
 ratatui = "0.26"
