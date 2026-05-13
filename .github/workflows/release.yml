@@ -22,9 +22,6 @@ jobs:
           - arch: x86_64-linux
             nix-system: x86_64-linux
             artifact-suffix: x86_64
-          - arch: aarch64-linux
-            nix-system: aarch64-linux
-            artifact-suffix: aarch64
 
     steps:
       - name: Checkout repository
@@ -32,18 +29,9 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
-        with:
-          extra-conf: |
-            extra-platforms = aarch64-linux
 
       - name: Setup Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@main
-
-      - name: Setup QEMU for aarch64
-        if: matrix.arch == 'aarch64-linux'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
 
       - name: Build static binary
         run: nix build .#static --system ${{ matrix.nix-system }}
@@ -60,7 +48,7 @@ jobs:
           name: binary-${{ matrix.artifact-suffix }}
           path: ./sptlrx-rs-${{ matrix.artifact-suffix }}
 
-  # ── Publicar Release con ambos binarios ─────────────────────────────────────
+  # ── Publicar Release ────────────────────────────────────────────────────────
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
@@ -85,7 +73,7 @@ jobs:
             | Archivo | Arquitectura | Descripción |
             |---------|-------------|-------------|
             | `sptlrx-rs-x86_64` | x86_64 | Intel/AMD (mayoría de PCs) |
-            | `sptlrx-rs-aarch64` | aarch64 | ARM64 (Raspberry Pi, etc.) |
+
 
             ### Instalación rápida
             ```bash
